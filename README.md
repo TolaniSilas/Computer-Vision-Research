@@ -9,3 +9,5 @@ small, low latency models that can be easily matched to the
 design requirements for mobile and embedded vision applications. 
 
 The paper can be found [here](https://arxiv.org/abs/1704.04861)
+
+For implementation and learning, i trained the mobilenet weights from scracth for about 25 epochs on the FashionMNIST datasets. 
