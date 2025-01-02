@@ -65,4 +65,5 @@ def load_MNIST_dataset():
     return train_loader, valid_loader
 
 
-print("Data are loaded and are ready to use!")
+# train_loader, valid_loader = load_MNIST_dataset()
+# print("Data are loaded and are ready to use!")
