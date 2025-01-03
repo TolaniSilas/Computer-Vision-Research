@@ -4,8 +4,11 @@ from torch.nn import functional as nn_func
 
 
 """
-Implementation of MobileNets:
-"""
+Implementation of MobileNet from the paper :
+MobileNets: Efficient Convolutional Neural Networks for Mobile Vision Applications by Howard et al.
+
+You can find the paper here: https://arxiv.org/abs/1704.04861
+""" 
 
 
 
