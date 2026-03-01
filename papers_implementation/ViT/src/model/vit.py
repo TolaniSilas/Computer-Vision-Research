@@ -6,6 +6,7 @@ https://arxiv.org/pdf/2010.11929
 import torch
 import torch.nn as nn
 from torch.nn import CrossEntropyLoss, Linear
+from components import TransformerEncoder
 
 
 
@@ -30,7 +31,6 @@ class MLP_Head(nn.Module):
 
 
 
-# implement ViT
 class VisionTransformer:
     """implementation of the Vision Transformer (ViT) architecture."""
 
@@ -42,7 +42,7 @@ class VisionTransformer:
         self.zero_head = zero_head
         self.classifier = config.classifier
 
-        self.transformer = "Transformer()"
+        self.transformer = TransformerEncoder()
         self.mlp_head = MLP_Head(config.hidden_size, self.num_classes)
 
 

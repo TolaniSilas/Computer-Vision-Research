@@ -36,7 +36,60 @@ class MLP(nn.Module):
 
 
 
-# Patch Embedding.
+class MultiHeadAttention(nn.Module):
+    """multi-head attention mechanism with multiple parallel attention heads for the vision transformer (ViT)."""
+
+    def __init__(self, num_heads, head_dim):
+        """initialize the multi-head attention layer."""
+        super().__init__()
+
+        self.num_heads = num_heads
+        self.head_dim = head_dim
+        self.qkv = ""
+
+
+
+
+
+
+class TransformerBlock(nn.Module):
+    """transformer block for the vision transformer (ViT)."""
+
+    def __init__(self):
+        """initializes the transformer block with a multi-head attention layer and a mlp layer."""
+        super().__init__()
+
+        self.multi_head_attention = MultiHeadAttention()
+        self.mlp = MLP()
+
+
+
+class Encoder(nn.Module):
+    def __init__(self, config, vis):
+        super(Encoder, self).__init__()
+        self.vis = vis
+        self.layer = nn.ModuleList()
+        self.encoder_norm = LayerNorm(config.hidden_size, eps=1e-6)
+        for _ in range(config.transformer["num_layers"]):
+            layer = Block(config, vis)
+            self.layer.append(copy.deepcopy(layer))
+
+    def forward(self, hidden_states):
+        attn_weights = []
+        for layer_block in self.layer:
+            hidden_states, weights = layer_block(hidden_states)
+            if self.vis:
+                attn_weights.append(weights)
+        encoded = self.encoder_norm(hidden_states)
+        return encoded, attn_weights
+
+
+
+
+
+
+
+
 class PatchEmbed(nn.Module):
     """embedding patches for the vision transformer (ViT)."""
 
@@ -44,23 +97,27 @@ class PatchEmbed(nn.Module):
         """initializes the patch embedding with a linear layer."""
         super().__init__()
 
+
+
+
+
+
+class TransformerEncoder(nn.Module):
+    """transformer encoder for the vision trasnformer (ViT)."""
+
+    def __init__(self, config, img_size):
+        """initializes the transformer encoder with a transformer block (multi-head attention and mlp layers) and embedding patches layer."""
+        super().__init__()
+
+        self.patch_embed = PatchEmbed(config, img_size=img_size)
+        self.transformer_blocks = TransformerBlock(config)
+
+    
+    def forward(self, x):
+        """applies the transformer encoder to the input."""
         
+        patch_embed_output = self.patch_embed(x)
 
-
-
-
-
-
-# Implement Multi-Head Attention (MHA).
-
-
-
-
-
-
-
-
-
-
-
-# Implement Transformer Encoder.
+        encoded = self.transformer_blocks(patch_embed_output)
+        
+        return encoded
