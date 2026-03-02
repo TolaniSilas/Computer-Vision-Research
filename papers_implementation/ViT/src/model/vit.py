@@ -30,8 +30,7 @@ class MLP_Head(nn.Module):
         return self.head_layer(x)
 
 
-
-class VisionTransformer:
+class VisionTransformer(nn.Module):
     """implementation of the Vision Transformer (ViT) architecture."""
 
     def __init__(self, config, img_size=224, num_classes=5, zero_head=False):
