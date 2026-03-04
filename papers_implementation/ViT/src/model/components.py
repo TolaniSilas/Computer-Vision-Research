@@ -7,26 +7,28 @@ https://arxiv.org/pdf/2010.11929
 import copy
 import torch
 import torch.nn as nn
+from torch.nn.modules.utils import _pair
 
 
 class MLP(nn.Module):
     """multi-layer perceptron for the vision transformer (ViT)."""
 
-    def __init__(self, input_size, hidden_size, output_size):
+    def __init__(self, input_size, hidden_size, output_size, dropout):
         """initializes the mlp with two linear layers."""
         super().__init__()
 
         self.input_size = input_size
         self.hidden_size = hidden_size
         self.output_size = output_size
+        self.dropout = dropout
 
         # two-layer mlp with gelu activation.
         self.layers = nn.Sequential(
             nn.Linear(self.input_size, self.hidden_size),
             nn.GELU(),
-            nn.Dropout(p=0.5),
+            nn.Dropout(self.dropout),
             nn.Linear(self.hidden_size, self.output_size),
-            nn.Dropout(p=0.5),
+            nn.Dropout(self.dropout),
         )
 
         # initialize weights after layers are defined.
@@ -182,8 +184,12 @@ class TransformerBlock(nn.Module):
 
 
 class EncoderBlock(nn.Module):
+    """"""
+
     def __init__(self, config):
+        """"""
         super().__init__()
+
 
         self.trfblock = nn.ModuleList()
         self.encoder_norm = nn.LayerNorm(config.hidden_size, eps=1e-6)
@@ -191,10 +197,10 @@ class EncoderBlock(nn.Module):
         for i in range(config["num_layers"]):
             layer = TransformerBlock(config)
             self.trfblock.append(copy.deepcopy(layer))
-
   
 
     def forward(self, hidden_states):
+        """"""
 
         for layer_block in self.trfblock:
             hidden_states= layer_block(hidden_states)
@@ -205,15 +211,70 @@ class EncoderBlock(nn.Module):
 
 
 class PatchEmbed(nn.Module):
-    """embedding patches for the vision transformer (ViT)."""
+    """Embedding of image patches for the vision transformer (ViT). One class: Conv2d patching + CLS token + positional embeddings + dropout."""
 
-    def __init__(self):
-        """initializes the patch embedding with a linear layer."""
+    def __init__(self, config, img_size, in_channels=3):
         super().__init__()
 
+        patch_size = _pair(config.get("patch_size", 16))
+        img_size = _pair(img_size)
+        embed_dim = config.get("embed_dim", 768)
+        dropout_rate = config.get("dropout", 0.1)
+
+        self.patch_size = patch_size
+        self.img_size = img_size
+        self.embed_dim = embed_dim
+
+        # patch creation through Conv2d: (B, C, H, W) -> (B, embed_dim, n_h, n_w); flatten to (B, n_patches, embed_dim) in forward
+        self.proj = nn.Conv2d(in_channels, embed_dim, kernel_size=patch_size, stride=patch_size, padding=0,
+        )
+
+        num_patches = PatchEmbed.num_patches(img_size[0], patch_size[0])
+
+        # for CLS token.
+        num_positions = num_patches + 1  
+
+        # learnable CLS token.
+        self.cls_token = nn.Parameter(torch.randn(1, 1, embed_dim), requires_grad=True)
+
+        # learnable positional embeddings
+        self.position_embeddings = nn.Parameter(torch.randn(1, num_positions, embed_dim), requires_grad=True)
+
+        self.dropout = nn.Dropout(p=dropout_rate)
 
 
+    @staticmethod
+    def num_patches(img_size, patch_size=16):
+        """compute number of patches: N = (W * H) / p² for a square image."""
 
+        return (img_size // patch_size) ** 2
+
+
+    def forward(self, x):
+
+        if x.dim() == 3:
+            x = x.unsqueeze(0)
+
+        B, _, H, W = x.shape
+
+        patch_size_h, patch_size_w = self.patch_size
+
+        assert H % patch_size_h == 0 and W % patch_size_w == 0, (
+            f"Image size ({H}, {W}) not divisible by patch size {self.patch_size}"
+        )
+
+        # (B, embed_dim, n_h, n_w) -> (B, embed_dim, n_patches) -> (B, n_patches, embed_dim)
+        patch_embeddings = self.proj(x).flatten(2).permute(0, 2, 1)
+
+        cls_tokens = self.cls_token.expand(B, -1, -1)
+        
+        embeddings = torch.cat((cls_tokens, patch_embeddings), dim=1) 
+        
+        embeddings = embeddings + self.position_embeddings
+
+        embeddings = self.dropout(embeddings)
+
+        return embeddings
 
 
 class TransformerEncoder(nn.Module):

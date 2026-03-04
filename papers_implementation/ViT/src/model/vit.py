@@ -8,8 +8,6 @@ import torch.nn as nn
 from torch.nn import CrossEntropyLoss, Linear
 from components import TransformerEncoder
 
-
-
 class MLP_Head(nn.Module):
     """multi-layer perceptron head after the transformer encoder."""
 
@@ -47,7 +45,7 @@ class VisionTransformer(nn.Module):
 
     def forward(self, x, labels=None):
 
-        x, _ = self.transformer(x)       # _ is attn_weights.
+        x = self.transformer(x)       # _ is attn_weights.
         
         logits = self.mlp_head(x[:,0])
 
