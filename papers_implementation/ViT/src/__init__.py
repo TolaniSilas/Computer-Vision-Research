@@ -1,3 +1,3 @@
-from .model import ViT
+from .model import vit
 
 __all__ = ["ViT"]

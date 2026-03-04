@@ -11,10 +11,10 @@ from torch.nn.modules.utils import _pair
 
 
 class MLP(nn.Module):
-    """multi-layer perceptron for the vision transformer (ViT)."""
+    """multi-layer perceptron for the vision transformer (vit)."""
 
     def __init__(self, input_size, hidden_size, output_size, dropout):
-        """initializes the mlp with two linear layers."""
+        """initializes two linear layers with gelu activation and dropout."""
         super().__init__()
 
         self.input_size = input_size
@@ -32,22 +32,21 @@ class MLP(nn.Module):
         )
 
         # initialize weights after layers are defined.
-        self._init_weights()  
-
+        self._init_weights()
 
     def _init_weights(self):
-        """initializes weights using xavier uniform and near-zero biases."""
+        """initializes weights with xavier uniform and biases near zero."""
 
         for module in self.layers:
             if isinstance(module, nn.Linear):
                 nn.init.xavier_uniform_(module.weight)
                 nn.init.normal_(module.bias, std=1e-6)
 
-
     def forward(self, x):
-        """applies the multi-layer perceptron to input."""
+        """passes input through the mlp layers."""
 
         return self.layers(x)
+
 
 
 class MultiHeadAttention(nn.Module):
@@ -141,6 +140,7 @@ class MultiHeadAttention(nn.Module):
         return context_vec
 
 
+
 class TransformerBlock(nn.Module):
     """transformer block for the vision transformer (ViT)."""
 
@@ -183,13 +183,13 @@ class TransformerBlock(nn.Module):
         return x  
 
 
+
 class EncoderBlock(nn.Module):
-    """"""
+    """stacks transformer blocks and applies final layer normalization."""
 
     def __init__(self, config):
-        """"""
+        """initializes transformer block list and layer norm."""
         super().__init__()
-
 
         self.trfblock = nn.ModuleList()
         self.encoder_norm = nn.LayerNorm(config.hidden_size, eps=1e-6)
@@ -197,23 +197,26 @@ class EncoderBlock(nn.Module):
         for i in range(config["num_layers"]):
             layer = TransformerBlock(config)
             self.trfblock.append(copy.deepcopy(layer))
-  
+
 
     def forward(self, hidden_states):
-        """"""
+        """passes hidden states through each transformer block then normalizes."""
 
         for layer_block in self.trfblock:
-            hidden_states= layer_block(hidden_states)
-        
+            hidden_states = layer_block(hidden_states)
+
+        # apply final layer norm.
         encoded = self.encoder_norm(hidden_states)
 
         return encoded
 
 
+
 class PatchEmbed(nn.Module):
-    """Embedding of image patches for the vision transformer (ViT). One class: Conv2d patching + CLS token + positional embeddings + dropout."""
+    """projects image patches into embeddings, appends cls token, and adds positional encodings."""
 
     def __init__(self, config, img_size, in_channels=3):
+        """initializes patch projection, cls token, positional embeddings, and dropout."""
         super().__init__()
 
         patch_size = _pair(config.get("patch_size", 16))
@@ -225,74 +228,76 @@ class PatchEmbed(nn.Module):
         self.img_size = img_size
         self.embed_dim = embed_dim
 
-        # patch creation through Conv2d: (B, C, H, W) -> (B, embed_dim, n_h, n_w); flatten to (B, n_patches, embed_dim) in forward
-        self.proj = nn.Conv2d(in_channels, embed_dim, kernel_size=patch_size, stride=patch_size, padding=0,
+        # conv2d projects patches: (B, C, H, W) -> (B, embed_dim, n_h, n_w), flattened in forward.
+        self.proj = nn.Conv2d(
+            in_channels,
+            embed_dim,
+            kernel_size=patch_size,
+            stride=patch_size,
+            padding=0,
         )
 
         num_patches = PatchEmbed.num_patches(img_size[0], patch_size[0])
 
-        # for CLS token.
-        num_positions = num_patches + 1  
+        # +1 position for the cls token.
+        num_positions = num_patches + 1
 
-        # learnable CLS token.
+        # learnable cls token.
         self.cls_token = nn.Parameter(torch.randn(1, 1, embed_dim), requires_grad=True)
 
-        # learnable positional embeddings
+        # learnable positional embeddings.
         self.position_embeddings = nn.Parameter(torch.randn(1, num_positions, embed_dim), requires_grad=True)
 
         self.dropout = nn.Dropout(p=dropout_rate)
 
-
     @staticmethod
     def num_patches(img_size, patch_size=16):
-        """compute number of patches: N = (W * H) / p² for a square image."""
+        """computes number of patches: n = (h * w) / p² for a square image."""
 
         return (img_size // patch_size) ** 2
 
-
     def forward(self, x):
+        """embeds input image into patch tokens with cls token and positional encodings."""
 
         if x.dim() == 3:
             x = x.unsqueeze(0)
 
         B, _, H, W = x.shape
-
         patch_size_h, patch_size_w = self.patch_size
 
         assert H % patch_size_h == 0 and W % patch_size_w == 0, (
-            f"Image size ({H}, {W}) not divisible by patch size {self.patch_size}"
+            f"image size ({H}, {W}) not divisible by patch size {self.patch_size}"
         )
 
-        # (B, embed_dim, n_h, n_w) -> (B, embed_dim, n_patches) -> (B, n_patches, embed_dim)
+        # flatten spatial dims and transpose: (B, embed_dim, n_patches) -> (B, n_patches, embed_dim).
         patch_embeddings = self.proj(x).flatten(2).permute(0, 2, 1)
 
+        # expand cls token across batch and prepend to patch embeddings.
         cls_tokens = self.cls_token.expand(B, -1, -1)
-        
-        embeddings = torch.cat((cls_tokens, patch_embeddings), dim=1) 
-        
-        embeddings = embeddings + self.position_embeddings
+        embeddings = torch.cat((cls_tokens, patch_embeddings), dim=1)
 
+        # add positional encodings and apply dropout.
+        embeddings = embeddings + self.position_embeddings
         embeddings = self.dropout(embeddings)
 
         return embeddings
 
 
+
 class TransformerEncoder(nn.Module):
-    """transformer encoder for the vision trasnformer (ViT)."""
+    """transformer encoder for the vision transformer (vit)."""
 
     def __init__(self, config, img_size):
-        """initializes the transformer encoder with a transformer block (multi-head attention and mlp layers) and embedding patches layer."""
+        """initializes patch embedding and stacked transformer blocks."""
         super().__init__()
 
         self.patch_embed = PatchEmbed(config, img_size=img_size)
         self.transformer_blocks = EncoderBlock(config)
 
-    
     def forward(self, x):
-        """applies the transformer encoder to the input."""
-        
-        patch_embed_output = self.patch_embed(x)
+        """embeds patches then encodes through transformer blocks."""
 
+        patch_embed_output = self.patch_embed(x)
         encoded = self.transformer_blocks(patch_embed_output)
-        
+
         return encoded

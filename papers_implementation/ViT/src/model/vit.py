@@ -5,34 +5,34 @@ https://arxiv.org/pdf/2010.11929
 
 import torch
 import torch.nn as nn
-from torch.nn import CrossEntropyLoss, Linear
+from torch.nn import CrossEntropyLoss
 from components import TransformerEncoder
 
+
 class MLP_Head(nn.Module):
-    """multi-layer perceptron head after the transformer encoder."""
+    """mlp head for classification after the transformer encoder."""
 
     def __init__(self, hidden_size, num_classes):
-        """initializes the mlp a layer."""
+        """initializes a single linear projection layer."""
         super().__init__()
 
         self.hidden_size = hidden_size
         self.num_classes = num_classes
 
-        # mlp head layer.
+        # linear projection to num_classes.
         self.head_layer = nn.Linear(self.hidden_size, self.num_classes)
 
-
     def forward(self, x):
-        """applies the multi-layer perceptron to input."""
+        """projects cls token representation to class logits."""
 
         return self.head_layer(x)
 
 
 class VisionTransformer(nn.Module):
-    """implementation of the Vision Transformer (ViT) architecture."""
+    """vision transformer (vit) architecture."""
 
     def __init__(self, config, img_size=224, num_classes=5, zero_head=False):
-        """initializes the vision transformer architecture with the given configuration for experimentation purposes."""
+        """initializes the vit with transformer encoder and mlp classification head."""
         super().__init__()
 
         self.num_classes = num_classes
@@ -44,21 +44,20 @@ class VisionTransformer(nn.Module):
 
 
     def forward(self, x, labels=None):
+        """encodes input and returns loss if labels provided, else logits."""
 
-        x = self.transformer(x)       # _ is attn_weights.
-        
-        logits = self.mlp_head(x[:,0])
+        # encode input through transformer, extract cls token.
+        x = self.transformer(x)
+        logits = self.mlp_head(x[:, 0])
 
         if labels is not None:
-
-            # compute the loss.
+            # compute cross entropy loss.
             loss_fct = CrossEntropyLoss()
             loss = loss_fct(logits.view(-1, self.num_classes), labels.view(-1))
 
             return loss
 
-        else:
-            return logits 
+        return logits
 
 
 
