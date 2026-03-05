@@ -210,10 +210,10 @@ class PatchEmbed(nn.Module):
         """initializes patch projection, cls token, positional embeddings, and dropout."""
         super().__init__()
 
-        patch_size = _pair(config.get("patch_size", 16))
+        patch_size = _pair(config["patch_size"])
         img_size = _pair(img_size)
-        embed_dim = config.get("embed_dim", 768)
-        dropout_rate = config.get("dropo_ut", 0.1)
+        embed_dim = config["embed_dim"]
+        dropout_rate = config["drop_out"]
 
         self.patch_size = patch_size
         self.img_size = img_size
@@ -289,7 +289,7 @@ class TransformerEncoder(nn.Module):
 
     def forward(self, x):
         """embeds patches then encodes through transformer blocks."""
-
+        
         patch_embed_output = self.patch_embed(x)
         encoded = self.transformer_blocks(patch_embed_output)
 

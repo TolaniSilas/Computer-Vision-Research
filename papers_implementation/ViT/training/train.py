@@ -1,14 +1,12 @@
-import sys
 import os
 import logging
 import argparse
 import copy
 import time
-from pathlib import Path
 import torch
 import torch.nn as nn
 from config.config import vit_testing
-from data_loader import load_stl10
+from training.data_loader import load_stl10
 import torch.optim as optim
 from torch.optim.lr_scheduler import CosineAnnealingLR
 from src.utils.helper_functions import get_lr
@@ -167,12 +165,12 @@ def train_val(model, params):
         current_lr = get_lr(optimizer)
         print(f"Epoch: {epoch}/{num_epochs}, current lr: {current_lr}")
 
-        # train phase: Set model to training mode and compute training loss and metric.
+        # train phase: set model to training mode and compute training loss and metric.
         train_loss, train_metric = train_model(model, loss_func, train_dataloader, optimizer, device, sanity_check)
         loss_history["train"].append(train_loss)
         metric_history["train"].append(train_metric)
 
-        # validation phase: Set model to evaluation mode and compute validation loss and metric.
+        # validation phase: set model to evaluation mode and compute validation loss and metric.
         val_loss, val_metric = validate_model(model, loss_func, val_dataloader, device, sanity_check)
         loss_history["val"].append(val_loss)
         metric_history["val"].append(val_metric)
@@ -220,7 +218,7 @@ def main():
     parser.add_argument("--checkpoint_dir", type=str, default="./models", help="directory to save checkpoints")
     parser.add_argument("--train_batch_size", type=int, default=32, help="training batch size")
     parser.add_argument("--val_batch_size", type=int, default=64, help="validation batch size")
-    parser.add_argument("--num_epochs", type=int, default=1, help="number of training epochs")
+    parser.add_argument("--num_epochs", type=int, default=20, help="number of training epochs")
     parser.add_argument("--lr", type=float, default=1e-4, help="learning rate")
     parser.add_argument("--t_max", type=int, default=5, help="cosine annealing t_max")
     parser.add_argument("--eta_min", type=float, default=1e-6, help="cosine annealing minimum lr")

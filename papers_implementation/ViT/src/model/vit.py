@@ -3,10 +3,10 @@ Vision Transformer (ViT) architecture Implementation from paper "An Image Is Wor
 https://arxiv.org/pdf/2010.11929
 """
 
-import torch
 import torch.nn as nn
 from torch.nn import CrossEntropyLoss
-from components import TransformerEncoder
+from src.model.components import TransformerEncoder
+
 
 
 class MLP_Head(nn.Module):
@@ -19,7 +19,7 @@ class MLP_Head(nn.Module):
         self.hidden_size = hidden_size
         self.num_classes = num_classes
 
-        # linear projection to num_classes.
+        # linear projection to number of classes.
         self.head_layer = nn.Linear(self.hidden_size, self.num_classes)
 
     def forward(self, x):
@@ -37,8 +37,6 @@ class VisionTransformer(nn.Module):
 
         self.img_size = img_size
         self.num_classes = num_classes
-        # self.zero_head = zero_head
-        # self.classifier = self.classifier
 
         self.transformer = TransformerEncoder(config, self.img_size)
         self.mlp_head = MLP_Head(config["hidden_size"], self.num_classes)
@@ -52,6 +50,7 @@ class VisionTransformer(nn.Module):
         logits = self.mlp_head(x[:, 0])
 
         if labels is not None:
+            
             # compute cross entropy loss.
             loss_fct = CrossEntropyLoss()
             loss = loss_fct(logits.view(-1, self.num_classes), labels.view(-1))
