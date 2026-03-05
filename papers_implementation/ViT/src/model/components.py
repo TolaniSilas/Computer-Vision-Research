@@ -52,7 +52,7 @@ class MLP(nn.Module):
 class MultiHeadAttention(nn.Module):
     """multi-head attention mechanism with multiple parallel attention heads for the vision transformer (ViT)."""
 
-    def __init__(self, d_in, d_out, context_length, dropout, num_heads, qkv_bias=False):
+    def __init__(self, d_in, d_out, dropout, num_heads, qkv_bias=False):
         """initialize the multi-head attention layer."""
 
         super().__init__()
@@ -80,12 +80,6 @@ class MultiHeadAttention(nn.Module):
         # dropout layer.
         self.dropout = nn.Dropout(dropout)
 
-        # causal mask to prevent attending to future positions (in order to avoid cheating).
-        self.register_buffer(
-            "mask",
-            torch.triu(torch.ones(context_length, context_length), diagonal=1)
-        )
-
 
     def forward(self, x):
         """applies multi-head attention to input sequence."""
@@ -110,10 +104,6 @@ class MultiHeadAttention(nn.Module):
 
         # compute attention scores.
         attn_scores = queries @ keys.transpose(2, 3)
-
-        # apply causal mask to prevent attending to future tokens.
-        mask_bool = self.mask.bool()[:num_tokens, :num_tokens]
-        attn_scores.masked_fill_(mask_bool, -torch.inf)
 
         # get key dimension for scaling.
         d_k = keys.shape[-1]
@@ -149,9 +139,10 @@ class TransformerBlock(nn.Module):
         super().__init__()
 
         self.layer_norm1 = nn.LayerNorm(config["embed_dim"])
-        self.multi_head_attention = MultiHeadAttention(config["num_heads"], config["head_dim"])
-        self.mlp = MLP(config["embed_dim"], config["hidden_size"], config["embed_dim"])
+        self.multi_head_attention = MultiHeadAttention(config["embed_dim"], config["embed_dim"], config["drop_out"], config["num_heads"])
+        self.mlp = MLP(config["embed_dim"], config["hidden_size"], config["embed_dim"], config["drop_out"])
         self.norm2 = nn.LayerNorm(config["embed_dim"])
+
 
     def forward(self, x):
         """applies the transformer block to the input."""
@@ -180,7 +171,7 @@ class TransformerBlock(nn.Module):
         # add the mlp output to the residual connection of multi-head attention.
         x = x + input
 
-        return x  
+        return x
 
 
 
@@ -192,7 +183,7 @@ class EncoderBlock(nn.Module):
         super().__init__()
 
         self.trfblock = nn.ModuleList()
-        self.encoder_norm = nn.LayerNorm(config.hidden_size, eps=1e-6)
+        self.encoder_norm = nn.LayerNorm(config["hidden_size"], eps=1e-6)
 
         for i in range(config["num_layers"]):
             layer = TransformerBlock(config)
@@ -222,7 +213,7 @@ class PatchEmbed(nn.Module):
         patch_size = _pair(config.get("patch_size", 16))
         img_size = _pair(img_size)
         embed_dim = config.get("embed_dim", 768)
-        dropout_rate = config.get("dropout", 0.1)
+        dropout_rate = config.get("dropo_ut", 0.1)
 
         self.patch_size = patch_size
         self.img_size = img_size
@@ -278,6 +269,8 @@ class PatchEmbed(nn.Module):
 
         # add positional encodings and apply dropout.
         embeddings = embeddings + self.position_embeddings
+
+        # apply droupout to embeddings.
         embeddings = self.dropout(embeddings)
 
         return embeddings
