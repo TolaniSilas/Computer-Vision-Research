@@ -31,16 +31,17 @@ class MLP_Head(nn.Module):
 class VisionTransformer(nn.Module):
     """vision transformer (vit) architecture."""
 
-    def __init__(self, config, img_size=224, num_classes=5, zero_head=False):
+    def __init__(self, config, img_size=112, num_classes=10, zero_head=False):
         """initializes the vit with transformer encoder and mlp classification head."""
         super().__init__()
 
+        self.img_size = img_size
         self.num_classes = num_classes
-        self.zero_head = zero_head
-        self.classifier = config.classifier
+        # self.zero_head = zero_head
+        # self.classifier = self.classifier
 
-        self.transformer = TransformerEncoder()
-        self.mlp_head = MLP_Head(config.hidden_size, self.num_classes)
+        self.transformer = TransformerEncoder(config, self.img_size)
+        self.mlp_head = MLP_Head(config["hidden_size"], self.num_classes)
 
 
     def forward(self, x, labels=None):
@@ -58,9 +59,3 @@ class VisionTransformer(nn.Module):
             return loss
 
         return logits
-
-
-
-
-
-
