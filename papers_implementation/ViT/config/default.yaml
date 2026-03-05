@@ -1,22 +1,15 @@
-# ViT default config (An Image Is Worth 16x16 Words)
-# Override via CLI or experiment configs.
+# ViT default config (an image is worth 16x16 words)
+# override via CLI or experiment configs.
 
-model:
-  image_size: 224
-  patch_size: 16
-  num_classes: 1000
-  dim: 768
-  depth: 12
-  heads: 12
-  mlp_dim: 3072
-  dropout: 0.1
-  emb_dropout: 0.1
 
 training:
-  batch_size: 32
-  epochs: 100
-  lr: 0.001
+  num_epochs: 20
+  lr: 1e-4
   weight_decay: 0.0
+  t_max: 5
+  eta_min: 1e-6
+  sanity_check: false
+  path2weights: ./models/vision-transformer_pretrained.pt
 
 data:
-  num_workers: 4
+  batch_size: 32
