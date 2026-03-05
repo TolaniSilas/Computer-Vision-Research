@@ -5,7 +5,14 @@ description = "Add your description here"
 readme = "README.md"
 requires-python = ">=3.10"
 dependencies = [
+    "matplotlib>=3.10.8",
+    "numpy==2.0.2",
+    "pandas==2.2.2",
+    "pytest>=9.0.2",
+    "scikit-learn==1.6.1",
     "torch==2.10.0+cpu",
+    "torchsummary==1.5.1",
+    "torchvision==0.25.0+cpu",
 ]
 
 
@@ -16,3 +23,4 @@ explicit = true
 
 [tool.uv.sources]
 torch = { index = "pytorch-cpu" }
+torchvision = { index = "pytorch-cpu" }
