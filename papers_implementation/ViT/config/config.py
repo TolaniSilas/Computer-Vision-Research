@@ -1,28 +1,75 @@
 """
-Named ViT variants (ViT-Tiny, ViT-Small, ViT-Base) for easy import.
-Reference: An Image Is Worth 16x16 Words (Dosovitskiy et al.).
+Configuration for Vision Transformer (ViT)
+Reference: "An Image Is Worth 16x16 Words: Transformers for Image Recognition at Scale" by Dosovitskiy et al. (2020).
+https://arxiv.org/pdf/2010.11929 
 """
 
-VIT_TINY = dict(
-    patch_size=16,
-    dim=192,
-    depth=12,
-    heads=3,
-    mlp_dim=768,
+class ViTConfig:
+    """configuration class for vision transformer (vit) hyperparameters."""
+
+    def __init__(
+        self,
+        embed_dim=768,       # embedding dimension.
+        hidden_size=768,     # hidden size of the transformer.
+        num_layers=12,       # number of transformer layers.
+        num_heads=12,        # number of attention heads.
+        drop_out=0.2,        # dropout rate.
+        qkv_bias=False       # query-key-value bias.
+    ):
+        """initializes vit configuration with hyperparameters."""
+
+        self.embed_dim = embed_dim
+        self.hidden_size = hidden_size
+        self.num_layers = num_layers
+        self.num_heads = num_heads
+        self.drop_out = drop_out
+        self.qkv_bias = qkv_bias
+
+    def __getitem__(self, key):
+        """allows dictionary-style access."""
+
+        return getattr(self, key)
+
+    def __setitem__(self, key, value):
+        """allows dictionary-style setting."""
+
+        setattr(self, key, value)
+
+
+
+# predefined configurations for different vit variants.
+vit_testing = ViTConfig(
+    embed_dim=192,
+    hidden_size=192,
+    num_layers=4,
+    num_heads=3,
+    drop_out=0.1,
+    qkv_bias=False
 )
 
-VIT_SMALL = dict(
-    patch_size=16,
-    dim=384,
-    depth=12,
-    heads=6,
-    mlp_dim=1536,
+vit_base = ViTConfig(
+    embed_dim=768,
+    hidden_size=768,
+    num_layers=12,
+    num_heads=12,
+    drop_out=0.1,
+    qkv_bias=False
 )
 
-VIT_BASE = dict(
-    patch_size=16,
-    dim=768,
-    depth=12,
-    heads=12,
-    mlp_dim=3072,
+vit_large = ViTConfig(
+    embed_dim=1024,
+    hidden_size=1024,
+    num_layers=24,
+    num_heads=16,
+    drop_out=0.1,
+    qkv_bias=False
+)
+
+vit_huge = ViTConfig(
+    embed_dim=1280,
+    hidden_size=1280,
+    num_layers=32,
+    num_heads=16,
+    drop_out=0.1,
+    qkv_bias=False
 )
