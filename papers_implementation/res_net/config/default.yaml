@@ -1,0 +1,16 @@
+# resnet-18 default config (deep residual learning for image recognition)
+# override via CLI or experiment configs.
+
+
+training:
+  num_epochs: 1
+  lr: 1e-4
+  t_max: 5
+  eta_min: 1e-6
+  sanity_check: false
+  path2weights: ./models/resnet-18_best_weights.pt
+  
+
+data:
+  train_batch_size: 32
+  val_batch_size: 64
