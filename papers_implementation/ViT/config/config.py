@@ -1,5 +1,5 @@
 """
-Configuration for Vision Transformer (ViT)
+configuration for Vision Transformer (ViT)
 Reference: "An Image Is Worth 16x16 Words: Transformers for Image Recognition at Scale" by Dosovitskiy et al. (2020).
 https://arxiv.org/pdf/2010.11929 
 """
@@ -9,6 +9,7 @@ class ViTConfig:
 
     def __init__(
         self,
+        patch_size=16,        # patch size.
         embed_dim=768,       # embedding dimension.
         hidden_size=768,     # hidden size of the transformer.
         num_layers=12,       # number of transformer layers.
@@ -18,6 +19,7 @@ class ViTConfig:
     ):
         """initializes vit configuration with hyperparameters."""
 
+        self.patch_size = patch_size
         self.embed_dim = embed_dim
         self.hidden_size = hidden_size
         self.num_layers = num_layers
@@ -39,6 +41,7 @@ class ViTConfig:
 
 # predefined configurations for different vit variants.
 vit_testing = ViTConfig(
+    patch_size=16,
     embed_dim=192,
     hidden_size=192,
     num_layers=4,
@@ -48,6 +51,7 @@ vit_testing = ViTConfig(
 )
 
 vit_base = ViTConfig(
+    patch_size=16,
     embed_dim=768,
     hidden_size=768,
     num_layers=12,
@@ -57,6 +61,7 @@ vit_base = ViTConfig(
 )
 
 vit_large = ViTConfig(
+    patch_size=16,
     embed_dim=1024,
     hidden_size=1024,
     num_layers=24,
@@ -66,6 +71,7 @@ vit_large = ViTConfig(
 )
 
 vit_huge = ViTConfig(
+    patch_size=16,
     embed_dim=1280,
     hidden_size=1280,
     num_layers=32,
