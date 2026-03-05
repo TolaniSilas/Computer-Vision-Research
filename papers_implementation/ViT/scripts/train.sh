@@ -1,8 +1,7 @@
 #!/usr/bin/env bash
-# train ViT model from config. run from the repository root or ViT directory (anyone works).
-# for instance, see: python3 -m training.train --config config/default.yaml
-
+# train ViT model. run from the repository root or ViT directory.
+# for instance: bash scripts/train.sh --sanity_check
 
 set -e
 cd "$(dirname "$0")/.."
-python3 -m training.train --config config/default.yaml "$@"
+python3 -m training.train "$@"
